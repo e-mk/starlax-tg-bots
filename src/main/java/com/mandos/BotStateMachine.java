@@ -1,10 +1,11 @@
 package com.mandos;
 
-public interface BotStateMachine {
+public interface BotStateMachine<T extends BotState> {
 
-    void toState(BotState state);
+    void toState(Long chatId, T state);
 
-    void toStartState();
+    void toStartState(Long chatId);
 
-    void cleanKeyboard();
+    void cleanKeyboard(Long chatId, String txt);
+
 }

@@ -1,17 +1,25 @@
 package com.mandos;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
 
-public class BotHelper {
+public class BotCommunicationHelper {
 
-    public void sendText(Long chatId, String what, TelegramLongPollingBot tgLongPollingBot){
+    private TelegramLongPollingBot tgLongPollingBot;
+
+    public BotCommunicationHelper(TelegramLongPollingBot tgLongPollingBot) {
+        this.tgLongPollingBot = tgLongPollingBot;
+    }
+
+    public void sendText(Long chatId, String what){
         SendMessage sm = SendMessage.builder()
                 .chatId(chatId.toString()) //Who are we sending a message to
                 .text(what).build();    //Message content
@@ -22,7 +30,7 @@ public class BotHelper {
         }
     }
 
-    public void sendMenu(Long chatId, String txt, ReplyKeyboard kb, TelegramLongPollingBot tgLongPollingBot){
+    public void sendMenu(Long chatId, String txt, ReplyKeyboard kb){
         SendMessage sm = SendMessage.builder()
                 .chatId(chatId.toString())
                 .parseMode("HTML")
@@ -38,13 +46,33 @@ public class BotHelper {
     }
 
 
-    public void sendKeyBoard(Long chatId, String txt, List<KeyboardRow> keyboard, TelegramLongPollingBot tgLongPollingBot) {
+    public void sendKeyboard(Long chatId, String txt, List<KeyboardRow> keyboard) {
         ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
                 .oneTimeKeyboard(true)
                 .keyboard(keyboard)
                 .resizeKeyboard(true)
                 .build();
 
-        sendMenu(chatId, txt, keyboardMarkup, tgLongPollingBot);
+        sendMenu(chatId, txt, keyboardMarkup);
+    }
+
+    public void sendRemoveKeyboard(Long chatId, String txt) {
+        ReplyKeyboardRemove replyKeyboardRemove = ReplyKeyboardRemove.builder()
+                .removeKeyboard(true)
+                .build();
+
+        sendMenu(chatId, txt, replyKeyboardRemove);
+    }
+
+    public void sendCallbackQueryClose(String queryId) {
+        AnswerCallbackQuery close = AnswerCallbackQuery.builder()
+                .callbackQueryId(queryId)
+                .build();
+
+        try {
+            tgLongPollingBot.execute(close);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
