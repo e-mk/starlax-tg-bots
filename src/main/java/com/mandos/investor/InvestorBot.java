@@ -3,7 +3,6 @@ package com.mandos.investor;
 import com.mandos.BotCommunicationHelper;
 import com.mandos.BotStateMachine;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -122,12 +121,12 @@ public class InvestorBot extends TelegramLongPollingBot implements BotStateMachi
 
     @Override
     public void toStartState(Long chatId) {
-        KeyboardRow testKeyboard = new KeyboardRow();
-        testKeyboard.add(MSG_INVEST);
-        testKeyboard.add(MSG_ACTIVE_INVESTMENTS);
+        KeyboardRow startKeyboardRaw = new KeyboardRow();
+        startKeyboardRaw.add(MSG_INVEST);
+        startKeyboardRaw.add(MSG_ACTIVE_INVESTMENTS);
 
         List<KeyboardRow> keyboard = new ArrayList<>();
-        keyboard.add(testKeyboard);
+        keyboard.add(startKeyboardRaw);
         botCommunicationHelper.sendKeyboard(chatId, TEXT_START, keyboard);
     }
 
