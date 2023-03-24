@@ -23,3 +23,7 @@
 hs_err_pid*
 /target/
 /.idea/
+/.gradle/
+/build/
+.DS_Store
+investor-bot.iml

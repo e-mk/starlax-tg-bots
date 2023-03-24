@@ -2,6 +2,7 @@ package com.mandos.investor;
 
 import com.mandos.BotCommunicationHelper;
 import com.mandos.BotStateMachine;
+import com.mandos.ton.TonHelper;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -19,10 +20,12 @@ public class InvestorBot extends TelegramLongPollingBot implements BotStateMachi
 
     private static final String BOT_NAME = "investor_bot";
     private static final String BOT_TOKEN = "5987382692:AAFpbeiQjkt4sHaMdnkPFqDuHZQtGw3WjyM";
-    public static final String TEXT_WELCOME = "<b>Welcome bitch!!</b>";
     public static final String COMMAND_START = "/start";
     public static final String MSG_INVEST = "Invest";
     public static final String MSG_ACTIVE_INVESTMENTS = "Active Investments";
+    public static final String TEXT_WELCOME = "<b>Welcome bitch!!</b>";
+    public static final String TEXT_ENTER_WALLET = "<b>Please, enter your wallet address</b>";
+    public static final String TEXT_NEED_AUTH = "Please, Log in with your wallet address to play";
     public static final String TEXT_START = "<b>Please, select to invest for new investments, or check your portfolio.</b>";
     public static final String TEXT_INVESTMENT_MENU_HEADER = "<b>Games to invest</b>";
     public static final String TEXT_INVESTMENT_MENU = "Please, select the game you want to invest in";
@@ -30,7 +33,7 @@ public class InvestorBot extends TelegramLongPollingBot implements BotStateMachi
 
     private final BotCommunicationHelper botCommunicationHelper = new BotCommunicationHelper(this);
 
-    private InvestorBotState botState = InvestorBotState.START;
+    private InvestorBotState botState = InvestorBotState.NO_AUTH;
 
     private final Map<String, String> investmentGamesMap;
 
@@ -52,6 +55,8 @@ public class InvestorBot extends TelegramLongPollingBot implements BotStateMachi
 
         keyboardInvest = keyboardInvestBuilder.build();
     }
+
+    private String authenticatedWallet = "";
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -85,12 +90,18 @@ public class InvestorBot extends TelegramLongPollingBot implements BotStateMachi
 
         if(msg.isCommand()){
             if (msg.getText().equals(COMMAND_START)) {
-                toState(chatId, InvestorBotState.START);
+                toState(chatId, InvestorBotState.NO_AUTH);
             }
         } else if (msg.getText().equals(MSG_INVEST)) {
             toState(chatId, InvestorBotState.INVEST_MENU);
         } else if (msg.getText().equals(MSG_ACTIVE_INVESTMENTS)) {
             toState(chatId, InvestorBotState.ACTIVE_INVESTMENTS);
+        } else if (botState == InvestorBotState.NO_AUTH) {
+            if (TonHelper.isWalletAddress(msg.getText())) {
+                doAuthenticate(chatId, msg.getText());
+            } else {
+                botCommunicationHelper.sendText(chatId, TEXT_NEED_AUTH);
+            }
         }
     }
 
@@ -106,7 +117,7 @@ public class InvestorBot extends TelegramLongPollingBot implements BotStateMachi
 
     @Override
     public void toState(Long chatId, InvestorBotState newState) {
-        if (newState == InvestorBotState.START) {
+        if (newState == InvestorBotState.NO_AUTH || newState == InvestorBotState.AUTHENTICATED) {
             toStartState(chatId);
         } else if(newState == InvestorBotState.INVEST_MENU) {
             cleanKeyboard(chatId, TEXT_INVESTMENT_MENU);
@@ -121,13 +132,22 @@ public class InvestorBot extends TelegramLongPollingBot implements BotStateMachi
 
     @Override
     public void toStartState(Long chatId) {
-        KeyboardRow startKeyboardRaw = new KeyboardRow();
-        startKeyboardRaw.add(MSG_INVEST);
-        startKeyboardRaw.add(MSG_ACTIVE_INVESTMENTS);
+        if (authenticatedWallet.isEmpty()) {
+            botCommunicationHelper.sendText(chatId, TEXT_ENTER_WALLET);
+        } else {
+            KeyboardRow startKeyboardRaw = new KeyboardRow();
+            startKeyboardRaw.add(MSG_INVEST);
+            startKeyboardRaw.add(MSG_ACTIVE_INVESTMENTS);
 
-        List<KeyboardRow> keyboard = new ArrayList<>();
-        keyboard.add(startKeyboardRaw);
-        botCommunicationHelper.sendKeyboard(chatId, TEXT_START, keyboard);
+            List<KeyboardRow> keyboard = new ArrayList<>();
+            keyboard.add(startKeyboardRaw);
+            botCommunicationHelper.sendKeyboard(chatId, TEXT_START, keyboard);
+        }
+    }
+
+    private void doAuthenticate(Long chatId, String walletAddress) {
+        authenticatedWallet = walletAddress;
+        toState(chatId, InvestorBotState.AUTHENTICATED);
     }
 
     @Override

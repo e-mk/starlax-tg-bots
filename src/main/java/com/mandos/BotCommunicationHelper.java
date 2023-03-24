@@ -3,6 +3,8 @@ package com.mandos;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
@@ -19,10 +21,12 @@ public class BotCommunicationHelper {
         this.tgLongPollingBot = tgLongPollingBot;
     }
 
-    public void sendText(Long chatId, String what){
+    public void sendText(Long chatId, String txt){
         SendMessage sm = SendMessage.builder()
                 .chatId(chatId.toString()) //Who are we sending a message to
-                .text(what).build();    //Message content
+                .parseMode("HTML")
+                .text(txt)
+                .build();    //Message content
         try {
             tgLongPollingBot.execute(sm);                        //Actually sending the message
         } catch (TelegramApiException e) {
@@ -30,7 +34,7 @@ public class BotCommunicationHelper {
         }
     }
 
-    public void sendMenu(Long chatId, String txt, ReplyKeyboard kb){
+    public Integer sendMenu(Long chatId, String txt, ReplyKeyboard kb){
         SendMessage sm = SendMessage.builder()
                 .chatId(chatId.toString())
                 .parseMode("HTML")
@@ -39,7 +43,8 @@ public class BotCommunicationHelper {
                 .build();
 
         try {
-            tgLongPollingBot.execute(sm);
+            Message a = tgLongPollingBot.execute(sm);
+            return a.getMessageId();
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
@@ -75,4 +80,20 @@ public class BotCommunicationHelper {
             throw new RuntimeException(e);
         }
     }
+
+    public void sendEditMessage(Long chatId, Integer messageId) {
+        EditMessageReplyMarkup clearInlineKb = EditMessageReplyMarkup.builder()
+                .messageId(messageId)
+                .chatId(chatId.toString())
+                .replyMarkup(null)
+                .build();
+
+        try {
+            tgLongPollingBot.execute(clearInlineKb);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

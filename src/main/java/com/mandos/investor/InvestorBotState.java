@@ -4,7 +4,9 @@ import com.mandos.BotState;
 
 public enum InvestorBotState implements BotState {
 
-    START,
+    NO_AUTH,
+
+    AUTHENTICATED,
 
     INVEST_MENU,
 
